@@ -103,7 +103,6 @@ handle_call({'get_consume_rank', Identity}, _From, State) ->
             {reply, Reply, State}
     end;
 handle_call({'get_consume_rank_list', Limit}, _From, State) ->
-    lager:info("~p", [self()]),
     Reply = erank_api:list_member_range_by_score(
               ?RANK_CONSUME, "+inf", 5000, Limit),
     {reply, Reply, State};
