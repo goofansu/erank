@@ -22,7 +22,8 @@
 
 %% 增加指定排行榜的指定玩家的分数
 incr_score(RankType, Member, Increment) ->
-    eredis_api:zincrby(RankType, Increment, Member).
+    Score = new_score(RankType, Member, Increment),
+    eredis_api:zadd(RankType, Score, Member).
 
 %% 获得指定排行榜的指定玩家的分数
 get_score(RankType, Member) ->
@@ -77,3 +78,8 @@ list_member_range_by_score(RankType, Max, Min, Limit) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+new_score(RankType, Member, Increment) ->
+    {ok, Val} = eredis_api:zscore(RankType, Member),
+    Score = erank_misc:realworld_score(Val),
+    erank_misc:redis_score(Score+Increment).

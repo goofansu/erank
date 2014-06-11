@@ -9,7 +9,8 @@
 -module(eredis_api).
 
 %% API
--export([zincrby/3, zrevrank/2, zscore/2]).
+-export([zadd/3, zincrby/3, zscore/2]).
+-export([zrevrank/2]).
 -export([zrevrange/2, zrevrange/3]).
 -export([zrevrange_withscores/2, zrevrange_withscores/3]).
 -export([zrevrangebyscore/3]).
@@ -22,17 +23,21 @@
 %%% API
 %%%===================================================================
 
-zincrby(RankType, Increment, Member) ->
-    Score = new_score(RankType, Member, Increment),
-    eredis_pool:q(?POOL, ["ZADD", rank_key(RankType), Score, Member]).
-
-zrevrank(RankType, Member) ->
+zadd(RankType, Score, Member) ->
     Key = rank_key(RankType),
-    eredis_pool:q(?POOL, ["ZREVRANK", Key, Member]).
+    eredis_pool:q(?POOL, ["ZADD", Key, Score, Member]).
+
+zincrby(RankType, Increment, Member) ->
+    Key = rank_key(RankType),
+    eredis_pool:q(?POOL, ["ZINCRBY", Key, Increment, Member]).
 
 zscore(RankType, Member) ->
     Key = rank_key(RankType),
     eredis_pool:q(?POOL, ["ZSCORE", Key, Member]).
+
+zrevrank(RankType, Member) ->
+    Key = rank_key(RankType),
+    eredis_pool:q(?POOL, ["ZREVRANK", Key, Member]).
 
 zrevrange(RankType, Rank) ->
     zrevrange(RankType, Rank, Rank).
@@ -69,8 +74,3 @@ pipeline_rank_score(RankType, Member) ->
 
 rank_key(RankType) ->
     io_lib:format("rank:~p", [RankType]).
-
-new_score(RankType, Member, Increment) ->
-    {ok, Val} = zscore(RankType, Member),
-    Score = erank_misc:realworld_score(Val),
-    erank_misc:redis_score(Score+Increment).
