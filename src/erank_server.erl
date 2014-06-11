@@ -21,7 +21,8 @@
 -define(SERVER, ?MODULE).
 -define(POOL, ?MODULE).
 
--define(RANK_CONSUME, test).
+%% 消费排行榜
+-define(RANK_CONSUME, consume).
 
 -record(state, {}).
 
