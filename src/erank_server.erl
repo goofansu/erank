@@ -39,6 +39,7 @@
 start_link(Args) ->
     gen_server:start_link(?MODULE, Args, []).
 
+%% 更新消费排行
 add_consume_rank(Identity, AddScore) ->
     poolboy:transaction(?POOL, fun(Worker) ->
         gen_server:cast(Worker, {'add_consume_rank', Identity, AddScore})
