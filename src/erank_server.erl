@@ -43,7 +43,7 @@ start_link(Args) ->
 %% 更新消费排行
 add_consume_rank(Identity, AddScore) ->
     poolboy:transaction(?POOL, fun(Worker) ->
-        gen_server:cast(Worker, {'add_consume_rank', Identity, AddScore})
+        gen_server:call(Worker, {'add_consume_rank', Identity, AddScore})
     end).
 
 %% 获得我以及前一名的消费排名和分数
@@ -91,6 +91,9 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+handle_call({'add_consume_rank', Identity, AddScore}, _From, State) ->
+    {ok, Reply} = erank_api:incr_score(?RANK_CONSUME, Identity, AddScore),
+    {reply, Reply, State};
 handle_call({'get_consume_rank', Identity}, _From, State) ->
     [MyRank, MyScore] = erank_api:get_rank_score(?RANK_CONSUME, Identity),
     case MyRank =< 1 of
@@ -121,9 +124,6 @@ handle_call(_Request, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast({'add_consume_rank', Identity, AddScore}, State) ->
-    erank_api:incr_score(?RANK_CONSUME, Identity, AddScore),
-    {noreply, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
