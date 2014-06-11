@@ -12,6 +12,9 @@ get-deps:
 	./rebar get-deps
 	./rebar compile
 
+compile:
+	./rebar compile skip_deps=true
+
 run:
 	erl -emu_args -hidden -pa ebin -pa deps/*/ebin \
 	-config rel/sys.config -args_file rel/vm.args \

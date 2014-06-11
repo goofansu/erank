@@ -1,12 +1,9 @@
-{application, erank,
- [
-  {description, ""},
-  {vsn, "1"},
-  {registered, []},
-  {applications, [
-                  kernel,
-                  stdlib
-                 ]},
-  {mod, { erank_app, []}},
-  {env, []}
- ]}.
+{application,erank,
+             [{description,[]},
+              {vsn,"0.0.1"},
+              {registered,[]},
+              {applications,[kernel,stdlib]},
+              {mod,{erank_app,[]}},
+              {env,[]},
+              {modules,[erank_api,erank_app,erank_misc,erank_server,erank_sup,
+                        eredis_api]}]}.
