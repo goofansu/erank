@@ -102,7 +102,7 @@ handle_call({'get_consume_rank', Identity}, _From, State) ->
             {reply, Reply, State};
         false ->
             PrevRank = MyRank - 1,
-            PrevScore = erank_api:get_score_by_rank(?RANK_CONSUME, MyRank),
+            PrevScore = erank_api:get_score_by_rank(?RANK_CONSUME, PrevRank),
             Reply = [{MyRank, MyScore}, {PrevRank, PrevScore}],
             {reply, Reply, State}
     end;
