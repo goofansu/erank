@@ -77,9 +77,13 @@ list_member_range_by_score(RankType, Max, Min) ->
 %% 获得指定分数段内的玩家信息列表，限制返回个数
 list_member_range_by_score(RankType, Max, Min, Limit) ->
     {ok, L} = eredis_api:zrevrangebyscore(RankType, Max, Min, Limit),
-    L1 = lists:map(fun(Identity)-> binary_to_term(Identity) end, L),
-    {ok, Nicknames} = eredis_api:mget_nicknames(L1),
-    lists:zip(L1, Nicknames).
+    case L of
+        [] -> [];
+        _ ->
+            L1 = lists:map(fun(Identity)-> binary_to_term(Identity) end, L),
+            {ok, Nicknames} = eredis_api:mget_nicknames(L1),
+            lists:zip(L1, Nicknames)
+    end.
 
 %%%===================================================================
 %%% Internal functions
