@@ -9,7 +9,7 @@
 -module(erank_api).
 
 %% API
--export([incr_score/3]).
+-export([incr_score/3, save_nickname/2]).
 -export([get_score/2, get_rank/2, get_rank_score/2]).
 -export([get_score_by_rank/2]).
 -export([get_previous_member/2]).
@@ -19,6 +19,10 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
+
+%% 保存玩家昵称
+save_nickname(Identity, Nickname) ->
+    eredis_api:set_nickname(Identity, Nickname).
 
 %% 增加指定排行榜的指定玩家的分数
 incr_score(RankType, Identity, Increment) ->
