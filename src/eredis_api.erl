@@ -16,6 +16,7 @@
 -export([zrevrangebyscore/3]).
 -export([zrevrangebyscore/4]).
 -export([pipeline_rank_score/2]).
+-export([set_nickname/2, mget_nicknames/1]).
 
 -define(POOL, rank_pool).
 
@@ -68,9 +69,20 @@ pipeline_rank_score(RankType, Member) ->
                 ["ZSCORE", Key, Member]],
     eredis_pool:qp(?POOL, Pipeline).
 
+set_nickname(Identity, Nickname) ->
+    Key = identity_key(Identity),
+    eredis_pool:q(?POOL, ["SET", Key, Nickname]).
+
+mget_nicknames(Identities) ->
+    Keys = lists:map(fun(Identity)-> identity_key(Identity) end, Identities),
+    eredis_pool:q(?POOL, ["MGET"|Keys]).
+
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
 
 rank_key(RankType) ->
     io_lib:format("rank:~p", [RankType]).
+
+identity_key({Accname, SN}) ->
+    io_lib:format("account:~p:~p", [SN, Accname]).
