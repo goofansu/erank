@@ -9,7 +9,7 @@
 -module(erank_api).
 
 %% API
--export([incr_score/3, save_nickname/2]).
+-export([incr_score/3, save_nickname_serverid/3]).
 -export([get_score/2, get_rank/2, get_rank_score/2]).
 -export([get_score_by_rank/2]).
 -export([get_previous_member/2]).
@@ -21,8 +21,8 @@
 %%%===================================================================
 
 %% 保存玩家昵称
-save_nickname(Identity, Nickname) ->
-    eredis_api:set_nickname(Identity, Nickname).
+save_nickname_serverid(Identity, Nickname, ServerId) ->
+    eredis_api:set_nickname_serverid(Identity, Nickname, ServerId).
 
 %% 增加指定排行榜的指定玩家的分数
 incr_score(RankType, Identity, Increment) ->
@@ -87,8 +87,9 @@ list_member_limited_above_min_score(RankType, MinScore, Limit) ->
         [] -> [];
         L2 ->
             L3 = lists:reverse(L2),
-            {ok, Nicknames} = eredis_api:mget_nicknames(L3),
-            lists:zip(L3, Nicknames)
+            {ok, V} = eredis_api:mget_nickname_serverids(L3),
+            NicknameServerIds = lists:map(fun(E)-> binary_to_term(E) end, V),
+            lists:zip(L3, NicknameServerIds)
     end.
 
 %%%===================================================================
