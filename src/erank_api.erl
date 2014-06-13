@@ -88,8 +88,7 @@ list_member_limited_above_min_score(RankType, MinScore, Limit) ->
         L2 ->
             L3 = lists:reverse(L2),
             {ok, V} = eredis_api:mget_nickname_serverids(L3),
-            NicknameServerIds = lists:map(fun(E)-> binary_to_term(E) end, V),
-            lists:zip(L3, NicknameServerIds)
+            lists:map(fun(E)-> binary_to_term(E) end, V)
     end.
 
 %%%===================================================================
