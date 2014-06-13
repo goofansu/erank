@@ -87,10 +87,7 @@ init([]) ->
 %%--------------------------------------------------------------------
 handle_call({'add_consume_rank', Identity, Nickname, AddScore}, _From, State) ->
     {ok, Reply} = erank_api:incr_score(?RANK_CONSUME, Identity, AddScore),
-    case Reply =:= <<"1">> of
-        true -> erank_api:save_nickname(Identity, Nickname);
-        false -> skip
-    end,
+    erank_api:save_nickname(Identity, Nickname),
     {reply, Reply, State};
 handle_call({'get_consume_rank', Identity}, _From, State) ->
     [MyRank, MyScore] = erank_api:get_rank_score(?RANK_CONSUME, Identity),
