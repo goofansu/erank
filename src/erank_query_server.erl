@@ -12,7 +12,7 @@
 
 %% API
 -export([start_link/1]).
--export([get_consume_rank_list/0]).
+-export([get_rank_list/3]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -20,9 +20,6 @@
 
 -define(SERVER, ?MODULE).
 -define(POOL, ?MODULE).
-
-%% 消费排行榜
--define(RANK_CONSUME, consume).
 
 -record(state, {}).
 
@@ -40,10 +37,11 @@
 start_link(Args) ->
     gen_server:start_link(?MODULE, Args, []).
 
-%% 获得消费排行
-get_consume_rank_list() ->
+%% 根据排行类型，最低分数线以及限制个数获得排行列表
+get_rank_list(RankType, MinScore, Limit) ->
     poolboy:transaction(?POOL, fun(Worker) ->
-        gen_server:call(Worker, {'get_consume_rank_list', 20})
+        gen_server:call(Worker, {'get_consume_rank_list',
+                                 RankType, MinScore, Limit})
     end).
 
 %%%===================================================================
@@ -79,8 +77,8 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({'get_consume_rank_list', Limit}, _From, State) ->
-    Reply = erank_api:list_member_limited_above_min_score(?RANK_CONSUME, 5000, Limit),
+handle_call({'get_consume_rank_list', RankType, MinScore, Limit}, _From, State) ->
+    Reply = erank_api:list_member_limited_above_min_score(RankType, MinScore, Limit),
     {reply, Reply, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
