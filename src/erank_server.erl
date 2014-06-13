@@ -12,7 +12,8 @@
 
 %% API
 -export([start_link/1]).
--export([add_consume_rank/3, get_consume_rank/1, get_consume_rank_list/0]).
+-export([add_consume_rank/3, get_consume_rank/1,
+         get_consume_rank_list/0, get_award_rank_list/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -56,6 +57,12 @@ get_consume_rank(Identity) ->
 get_consume_rank_list() ->
     poolboy:transaction(?POOL, fun(Worker) ->
         gen_server:call(Worker, {'get_consume_rank_list', 20})
+    end).
+
+%% 获得可以获奖的排行列表
+get_award_rank_list(RankType) ->
+    poolboy:transaction(?POOL, fun(Worker) ->
+        gen_server:call(Worker, {'get_award_rank_list', RankType})
     end).
 
 %%%===================================================================
@@ -111,6 +118,9 @@ handle_call({'get_consume_rank', Identity}, _From, State) ->
     end;
 handle_call({'get_consume_rank_list', Limit}, _From, State) ->
     Reply = erank_api:list_member_limited_above_min_score(?RANK_CONSUME, 5000, Limit),
+    {reply, Reply, State};
+handle_call({'get_award_rank_list', RankType}, _From, State) ->
+    Reply = erank_api:list_identity_above_min_score(RankType, 5000),
     {reply, Reply, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,

@@ -13,9 +13,8 @@
 -export([get_score/2, get_rank/2, get_rank_score/2]).
 -export([get_score_by_rank/2]).
 -export([get_previous_member/2]).
+-export([list_identity_above_min_score/2]).
 -export([list_member_limited_above_min_score/3]).
--export([list_member_range_by_score/3]).
--export([list_member_range_by_score/4]).
 
 %%%===================================================================
 %%% API
@@ -70,7 +69,14 @@ get_score_by_rank(RankType, Rank) ->
         _ -> 0
     end.
 
-%% 获得指定排名段，并且分数高于指定值的玩家信息列表
+%% 获得指定排行榜的满足最低分数要求的玩家身份
+list_identity_above_min_score(RankType, MinScore) ->
+    {ok, L} = eredis_api:zrevrange_withscores(RankType, 0, -1),
+    L1 = make_identity_scores(L, []),
+    F = fun(E, Acc)-> filter_by_min_score(E, MinScore, Acc) end,
+    lists:foldl(F, [], L1).
+
+%% 获得指定排名段，并且分数高于指定值的玩家信息(身份+昵称)
 list_member_limited_above_min_score(_RankType, _MinScore, Limit) when Limit =< 0 -> [];
 list_member_limited_above_min_score(RankType, MinScore, Limit) ->
     {ok, L} = eredis_api:zrevrange_withscores(RankType, 0, Limit-1),
@@ -82,6 +88,15 @@ list_member_limited_above_min_score(RankType, MinScore, Limit) ->
             {ok, Nicknames} = eredis_api:mget_nicknames(L2),
             lists:zip(L2, Nicknames)
     end.
+
+%%%===================================================================
+%%% Internal functions
+%%%===================================================================
+
+new_score(RankType, Identity, Increment) ->
+    {ok, Val} = eredis_api:zscore(RankType, Identity),
+    Score = erank_misc:realworld_score(Val),
+    erank_misc:redis_score(Score+Increment).
 
 filter_by_min_score({I, Score}, MinScore, Acc) ->
     case Score >= MinScore of
@@ -95,28 +110,3 @@ make_identity_scores([Identity, Score|T], Acc) ->
              erank_misc:realworld_score(Score)}
             |Acc],
     make_identity_scores(T, Acc1).
-
-%% 获得指定分数段内的玩家信息列表
-list_member_range_by_score(RankType, Max, Min) ->
-    {ok, L} = eredis_api:zrevrangebyscore(RankType, Max, Min),
-    lists:map(fun(Identity)-> binary_to_term(Identity) end, L).
-
-%% 获得指定分数段内的玩家信息列表，限制返回个数
-list_member_range_by_score(RankType, Max, Min, Limit) ->
-    {ok, L} = eredis_api:zrevrangebyscore(RankType, Max, Min, Limit),
-    case L of
-        [] -> [];
-        _ ->
-            L1 = lists:map(fun(Identity)-> binary_to_term(Identity) end, L),
-            {ok, Nicknames} = eredis_api:mget_nicknames(L1),
-            lists:zip(L1, Nicknames)
-    end.
-
-%%%===================================================================
-%%% Internal functions
-%%%===================================================================
-
-new_score(RankType, Identity, Increment) ->
-    {ok, Val} = eredis_api:zscore(RankType, Identity),
-    Score = erank_misc:realworld_score(Val),
-    erank_misc:redis_score(Score+Increment).
