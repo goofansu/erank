@@ -6,4 +6,4 @@
               {mod,{erank_app,[]}},
               {env,[]},
               {modules,[erank_api,erank_app,erank_misc,erank_server,erank_sup,
-                        eredis_api]}]}.
+                        erank_util,eredis_api,eredis_keygen]}]}.
