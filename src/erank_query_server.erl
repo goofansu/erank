@@ -1,19 +1,18 @@
 %%%-------------------------------------------------------------------
 %%% @author goofansu <goofan.su@gmail.com>
 %%% @copyright (C) 2014, goofansu
-%%% @doc
+%%% @doc 排行榜查询服务
 %%%
 %%% @end
 %%% Created : 11 Jun 2014 by goofansu <goofan.su@gmail.com>
 %%%-------------------------------------------------------------------
--module(erank_server).
+-module(erank_query_server).
 
 -behaviour(gen_server).
 
 %% API
 -export([start_link/1]).
--export([add_consume_rank/3, get_consume_rank/1,
-         get_consume_rank_list/0, get_award_rank_list/1]).
+-export([get_consume_rank_list/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -41,28 +40,10 @@
 start_link(Args) ->
     gen_server:start_link(?MODULE, Args, []).
 
-%% 更新消费排行
-add_consume_rank(Identity, Nickname, AddScore) ->
-    poolboy:transaction(?POOL, fun(Worker) ->
-        gen_server:call(Worker, {'add_consume_rank', Identity, Nickname, AddScore})
-    end).
-
-%% 获得我以及前一名的消费排名和分数
-get_consume_rank(Identity) ->
-    poolboy:transaction(?POOL, fun(Worker) ->
-        gen_server:call(Worker, {'get_consume_rank', Identity})
-    end).
-
 %% 获得消费排行
 get_consume_rank_list() ->
     poolboy:transaction(?POOL, fun(Worker) ->
         gen_server:call(Worker, {'get_consume_rank_list', 20})
-    end).
-
-%% 获得可以获奖的排行列表
-get_award_rank_list(RankType) ->
-    poolboy:transaction(?POOL, fun(Worker) ->
-        gen_server:call(Worker, {'get_award_rank_list', RankType})
     end).
 
 %%%===================================================================
@@ -81,6 +62,7 @@ get_award_rank_list(RankType) ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
+    process_flag(trap_exit, true),
     {ok, #state{}}.
 
 %%--------------------------------------------------------------------
@@ -97,30 +79,8 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({'add_consume_rank', Identity, Nickname, AddScore}, _From, State) ->
-    {ok, Reply} = erank_api:incr_score(?RANK_CONSUME, Identity, AddScore),
-    case Reply =:= <<"1">> of
-        true -> erank_api:save_nickname(Identity, Nickname);
-        false -> skip
-    end,
-    {reply, Reply, State};
-handle_call({'get_consume_rank', Identity}, _From, State) ->
-    [MyRank, MyScore] = erank_api:get_rank_score(?RANK_CONSUME, Identity),
-    case MyRank =< 1 of
-        true ->
-            Reply = [{MyRank, MyScore}, {0, 0}],
-            {reply, Reply, State};
-        false ->
-            PrevRank = MyRank - 1,
-            PrevScore = erank_api:get_score_by_rank(?RANK_CONSUME, PrevRank),
-            Reply = [{MyRank, MyScore}, {PrevRank, PrevScore}],
-            {reply, Reply, State}
-    end;
 handle_call({'get_consume_rank_list', Limit}, _From, State) ->
     Reply = erank_api:list_member_limited_above_min_score(?RANK_CONSUME, 5000, Limit),
-    {reply, Reply, State};
-handle_call({'get_award_rank_list', RankType}, _From, State) ->
-    Reply = erank_api:list_identity_above_min_score(RankType, 5000),
     {reply, Reply, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,

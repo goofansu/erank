@@ -5,5 +5,6 @@
               {applications,[kernel,stdlib]},
               {mod,{erank_app,[]}},
               {env,[]},
-              {modules,[erank_api,erank_app,erank_misc,erank_server,erank_sup,
-                        erank_util,eredis_api,eredis_keygen]}]}.
+              {modules,[erank_api,erank_app,erank_award_server,erank_misc,
+                        erank_player_server,erank_query_server,erank_server,
+                        erank_sup,erank_util,eredis_api,eredis_keygen]}]}.
