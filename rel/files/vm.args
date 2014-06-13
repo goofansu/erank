@@ -9,22 +9,11 @@
 ##-heart
 
 ## Enable kernel poll and a few async threads
-+K true
-+A 16
+##+K true
+##+A 5
 
-## Sets the maximum number of simultaneously existing ports
-## Default: 65536
-+Q 100000
-
-## Sets the maximum number of simultaneously existing processes
-## Default: 212644
-+P 500000
+## Increase number of concurrent ports/sockets
+##-env ERL_MAX_PORTS 4096
 
 ## Tweak GC to run more often
 ##-env ERL_FULLSWEEP_AFTER 10
-
-## SMP support
--smp auto
-
-## hide from other nodes
--hidden
