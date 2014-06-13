@@ -13,7 +13,7 @@
 -export([get_score/2, get_rank/2, get_rank_score/2]).
 -export([get_score_by_rank/2]).
 -export([get_previous_member/2]).
--export([list_member_range_withscores/2]).
+-export([list_member_limited_above_min_score/3]).
 -export([list_member_range_by_score/3]).
 -export([list_member_range_by_score/4]).
 
@@ -70,11 +70,24 @@ get_score_by_rank(RankType, Rank) ->
         _ -> 0
     end.
 
-%% 获得指定排名段的玩家信息列表
-list_member_range_withscores(_RankType, Limit) when Limit =< 0 -> [];
-list_member_range_withscores(RankType, Limit) ->
+%% 获得指定排名段，并且分数高于指定值的玩家信息列表
+list_member_limited_above_min_score(_RankType, _MinScore, Limit) when Limit =< 0 -> [];
+list_member_limited_above_min_score(RankType, MinScore, Limit) ->
     {ok, L} = eredis_api:zrevrange_withscores(RankType, 0, Limit-1),
-    make_identity_scores(L, []).
+    L1 = make_identity_scores(L, []),
+    F = fun(E, Acc)-> filter_by_min_score(E, MinScore, Acc) end,
+    case lists:foldl(F, [], L1) of
+        [] -> [];
+        L2 ->
+            {ok, Nicknames} = eredis_api:mget_nicknames(L2),
+            lists:zip(L2, Nicknames)
+    end.
+
+filter_by_min_score({I, Score}, MinScore, Acc) ->
+    case Score >= MinScore of
+        true -> [I|Acc];
+        false -> Acc
+    end.
 
 make_identity_scores([], Acc) -> lists:reverse(Acc);
 make_identity_scores([Identity, Score|T], Acc) ->

@@ -110,8 +110,7 @@ handle_call({'get_consume_rank', Identity}, _From, State) ->
             {reply, Reply, State}
     end;
 handle_call({'get_consume_rank_list', Limit}, _From, State) ->
-    L = erank_api:list_member_range_withscores(?RANK_CONSUME, Limit),
-    Reply = lists:filter(fun({_, Score})-> Score >= 5000 end, L),
+    Reply = erank_api:list_member_limited_above_min_score(?RANK_CONSUME, 5000, Limit),
     {reply, Reply, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
