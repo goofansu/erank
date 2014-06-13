@@ -13,6 +13,7 @@
 -export([get_score/2, get_rank/2, get_rank_score/2]).
 -export([get_score_by_rank/2]).
 -export([get_previous_member/2]).
+-export([list_member_range_withscores/2]).
 -export([list_member_range_by_score/3]).
 -export([list_member_range_by_score/4]).
 
@@ -68,6 +69,19 @@ get_score_by_rank(RankType, Rank) ->
         {ok, [_, Score]} -> erank_misc:realworld_score(Score);
         _ -> 0
     end.
+
+%% 获得指定排名段的玩家信息列表
+list_member_range_withscores(_RankType, Limit) when Limit =< 0 -> [];
+list_member_range_withscores(RankType, Limit) ->
+    {ok, L} = eredis_api:zrevrange_withscores(RankType, 0, Limit-1),
+    make_identity_scores(L, []).
+
+make_identity_scores([], Acc) -> Acc;
+make_identity_scores([Identity, Score|T], Acc) ->
+    Acc1 = [{binary_to_term(Identity),
+             erank_misc:realworld_score(Score)}
+            |Acc],
+    make_identity_scores(T, Acc1).
 
 %% 获得指定分数段内的玩家信息列表
 list_member_range_by_score(RankType, Max, Min) ->
