@@ -81,12 +81,11 @@ list_identity_above_min_score(RankType, MinScore) ->
 list_member_limited_above_min_score(_RankType, _MinScore, Limit) when Limit =< 0 -> [];
 list_member_limited_above_min_score(RankType, MinScore, Limit) ->
     {ok, L} = eredis_api:zrevrange_withscores(RankType, 0, Limit-1),
-    case L =:= [] of
-        true -> [];
-        false ->
-            L1 = make_identity_scores(L, []),
-            F = fun(E, Acc)-> filter_by_min_score(E, MinScore, Acc) end,
-            L2 = lists:foldl(F, [], L1),
+    L1 = make_identity_scores(L, []),
+    F = fun(E, Acc)-> filter_by_min_score(E, MinScore, Acc) end,
+    case lists:foldl(F, [], L1) of
+        [] -> [];
+        L2 ->
             L3 = lists:reverse(L2),
             {ok, Nicknames} = eredis_api:mget_nicknames(L3),
             lists:zip(L3, Nicknames)
