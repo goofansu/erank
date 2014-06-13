@@ -76,7 +76,7 @@ list_member_range_withscores(RankType, Limit) ->
     {ok, L} = eredis_api:zrevrange_withscores(RankType, 0, Limit-1),
     make_identity_scores(L, []).
 
-make_identity_scores([], Acc) -> Acc;
+make_identity_scores([], Acc) -> lists:reverse(Acc);
 make_identity_scores([Identity, Score|T], Acc) ->
     Acc1 = [{binary_to_term(Identity),
              erank_misc:realworld_score(Score)}
