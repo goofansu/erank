@@ -25,6 +25,6 @@ compile:
 	./rebar compile skip_deps=true
 
 run:
-	erl -emu_args -hidden -pa ebin -pa deps/*/ebin \
+	erl -emu_args -pa ebin -pa deps/*/ebin \
 	-config rel/sys.config -args_file rel/vm.args \
 	-s lager -s erank_app
