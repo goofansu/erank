@@ -74,19 +74,22 @@ list_identity_above_min_score(RankType, MinScore) ->
     {ok, L} = eredis_api:zrevrange_withscores(RankType, 0, -1),
     L1 = make_identity_scores(L, []),
     F = fun(E, Acc)-> filter_by_min_score(E, MinScore, Acc) end,
-    lists:foldl(F, [], L1).
+    L2 = lists:foldl(F, [], L1),
+    lists:reverse(L2).
 
 %% 获得指定排名段，并且分数高于指定值的玩家信息(身份+昵称)
 list_member_limited_above_min_score(_RankType, _MinScore, Limit) when Limit =< 0 -> [];
 list_member_limited_above_min_score(RankType, MinScore, Limit) ->
     {ok, L} = eredis_api:zrevrange_withscores(RankType, 0, Limit-1),
-    L1 = make_identity_scores(L, []),
-    F = fun(E, Acc)-> filter_by_min_score(E, MinScore, Acc) end,
-    case lists:foldl(F, [], L1) of
-        [] -> [];
-        L2 ->
-            {ok, Nicknames} = eredis_api:mget_nicknames(L2),
-            lists:zip(L2, Nicknames)
+    case L =:= [] of
+        true -> [];
+        false ->
+            L1 = make_identity_scores(L, []),
+            F = fun(E, Acc)-> filter_by_min_score(E, MinScore, Acc) end,
+            L2 = lists:foldl(F, [], L1),
+            L3 = lists:reverse(L2),
+            {ok, Nicknames} = eredis_api:mget_nicknames(L3),
+            lists:zip(L3, Nicknames)
     end.
 
 %%%===================================================================
