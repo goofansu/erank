@@ -8,8 +8,11 @@ ERLC_OPTS ?= +debug_info +'{parse_transform, lager_transform}'
 
 include erlang.mk
 
-release: clean-release compile
+release: clean-app clean-release compile
 	./rebar generate
+
+clean-app:
+	./rebar clean
 
 clean-release:
 	rm -rf rel/erank
