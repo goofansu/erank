@@ -17,7 +17,7 @@
 -export([zrevrangebyscore/3]).
 -export([zrevrangebyscore/4]).
 -export([pipeline_rank_score/2]).
--export([set_nickname_serverid/3, mget_nickname_serverids/1]).
+-export([set_nickname_serverid/3, get_nickname_serverids/1]).
 
 -define(POOL, rank_pool).
 
@@ -74,13 +74,22 @@ pipeline_rank_score(RankType, Member) ->
 
 set_nickname_serverid(Identity, Nickname, ServerId) ->
     Key = eredis_keygen:identity_key(Identity),
-    eredis_pool:q(?POOL, ["SET", Key, {Nickname, ServerId}]).
+    eredis_pool:q(?POOL, ["HMSET", Key,
+                          nickname, Nickname,
+                          serverid, ServerId]).
 
-mget_nickname_serverids(Identities) ->
-    Keys = lists:map(fun(Identity)-> eredis_keygen:identity_key(Identity) end,
-                     Identities),
-    eredis_pool:q(?POOL, ["MGET"|Keys]).
+get_nickname_serverids([]) -> [];
+get_nickname_serverids(Identities) ->
+    Pipeline = lists:map(fun(Identity)->
+        Key = eredis_keygen:identity_key(Identity),
+        ["HMGET", Key, nickname, serverid]
+    end, Identities),
+    L = eredis_pool:qp(?POOL, Pipeline),
+    lists:map(fun map_hmget_vals/1, L).
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+map_hmget_vals({ok, Vals}) ->
+    Vals.

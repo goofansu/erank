@@ -78,18 +78,13 @@ list_identity_above_min_score(RankType, MinScore) ->
     lists:reverse(L2).
 
 %% 获得指定排名段，并且分数高于指定值的玩家信息(身份+昵称)
-list_member_limited_above_min_score(_RankType, _MinScore, Limit) when Limit =< 0 -> [];
+list_member_limited_above_min_score(_RankType, _MinScore, Limit)
+  when Limit =< 0 -> [];
 list_member_limited_above_min_score(RankType, MinScore, Limit) ->
     {ok, L} = eredis_api:zrevrange_withscores(RankType, 0, Limit-1),
     L1 = make_identity_scores(L, []),
-    F = fun(E, Acc)-> filter_by_min_score(E, MinScore, Acc) end,
-    case lists:foldl(F, [], L1) of
-        [] -> [];
-        L2 ->
-            L3 = lists:reverse(L2),
-            {ok, V} = eredis_api:mget_nickname_serverids(L3),
-            lists:map(fun(E)-> binary_to_term(E) end, V)
-    end.
+    L2 = filter_by_min_score(MinScore, L1),
+    eredis_api:get_nickname_serverids(L2).
 
 %%%===================================================================
 %%% Internal functions
@@ -100,6 +95,9 @@ new_score(RankType, Identity, Increment) ->
     Score = erank_misc:realworld_score(Val),
     erank_misc:redis_score(Score+Increment).
 
+filter_by_min_score(MinScore, L) ->
+    F = fun(E, Acc)-> filter_by_min_score(E, MinScore, Acc) end,
+    lists:reverse(lists:foldl(F, [], L)).
 filter_by_min_score({I, Score}, MinScore, Acc) ->
     case Score >= MinScore of
         true -> [I|Acc];
