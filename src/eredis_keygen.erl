@@ -16,10 +16,10 @@
 %%%===================================================================
 
 rank_key(RankType) ->
-    io_lib:format("rank:~p", [RankType]).
+    io_lib:format("rank:~s", [RankType]).
 
 identity_key({Accname, SN}) ->
-    io_lib:format("account:~p:~p", [SN, Accname]).
+    io_lib:format("acc:~b:~s", [SN, Accname]).
 
 %%%===================================================================
 %%% Internal functions
