@@ -21,7 +21,11 @@ clear_rank(RankType) ->
 
 fix_consume_rank([]) -> ok;
 fix_consume_rank([{Identity, InvalidScore}|T]) ->
-    erank_api:incr_score(consume, Identity, -InvalidScore),
+    IdentityStr = case is_binary(Identity) of
+                      true -> binary_to_list(Identity);
+                      false -> Identity
+                  end,
+    erank_api:incr_score(consume, IdentityStr, -InvalidScore),
     fix_consume_rank(T).
 
 %%%===================================================================
