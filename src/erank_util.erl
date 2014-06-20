@@ -22,17 +22,20 @@ clear_rank(RankType) ->
 fix_consume_rank(L) ->
     RankKey = eredis_keygen:rank_key(consume),
     {ok, C} = eredis:start_link(),
-    eredis:q(C, ["DEL", RankKey]),
-    fix_consume_rank_1(L, C, RankKey).
-
-fix_consume_rank_1([], _C, _RankKey) -> ok;
-fix_consume_rank_1([{Identity, Score}|T], C, RankKey) ->
-    RedisScore = erank_misc:redis_score(Score),
-    {AccName, SN} = Identity,
-    IdentityTerm = {binary_to_list(AccName), SN},
-    {ok, <<"1">>} = eredis:q(C, ["ZADD", RankKey, RedisScore, IdentityTerm]),
-    fix_consume_rank_1(T, C, RankKey).
+    L1 = prepare_consume_ranks(L, []),
+    {ok, Saved} = eredis:q(C, ["ZADD", RankKey | L1]),
+    lager:info("Total saved count:~s", [Saved]),
+    ok.
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+%% 准备批量插入的排行数据
+prepare_consume_ranks([], Acc) -> Acc;
+prepare_consume_ranks([{Identity, Score}|T], Acc) ->
+    {AccName, SN} = Identity,
+    IdentityTerm = {binary_to_list(AccName), SN},
+    RedisScore = erank_misc:redis_score(Score),
+    Acc1 = [RedisScore, IdentityTerm | Acc],
+    prepare_consume_ranks(T, Acc1).
