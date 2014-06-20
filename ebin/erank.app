@@ -1,6 +1,6 @@
 {application,erank,
              [{description,[]},
-              {vsn,"0.0.2"},
+              {vsn,"0.0.3"},
               {registered,[]},
               {applications,[kernel,stdlib]},
               {mod,{erank_app,[]}},
